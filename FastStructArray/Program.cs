@@ -1,23 +1,72 @@
 ﻿using System.Runtime.InteropServices;
-using Algorithms;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
 namespace FastStructArray;
 
-
 [MemoryDiagnoser]
 public class Program
 {
     private static readonly StructArray<ITestable, Testables> StructArray;
+    private static readonly StructArray<ITestable, Testables> LargeStructArray;
     private static readonly ITestable[] NormalArray = new ITestable[10];
+    private static readonly ITestable[] LargeNormalArray = new ITestable[10_000];
 
     static Program()
     {
         StructArray = new StructArray<ITestable, Testables>(10);
+
+        LargeStructArray = new StructArray<ITestable, Testables>(10_000);
+        for (var i = 0; i < 10_000; i++)
+        {
+            if (Random.Shared.Next() > 0)
+            {
+                StructArray.Set(i,
+                    new Box3d
+                    {
+                        Box = new Box
+                        {
+                            Height = 20,
+                            Width = 22,
+                        },
+                        Depth = 321
+                    });
+            }
+            else
+            {
+                StructArray.Set(i,
+                    new Box
+                    {
+                        Height = 20,
+                        Width = 22,
+                    });
+            }
+        }
+
         for (var i = 0; i < NormalArray.Length; i++)
         {
             NormalArray[i] = new Box();
+        }
+
+        for (var i = 0; i < LargeNormalArray.Length; i++)
+        {
+            if (Random.Shared.Next() > 0)
+            {
+                LargeNormalArray[i] = new Box3d
+                {
+                    Box = new Box
+                    {
+                        Height = 20,
+                        Width = 22,
+                    },
+                    Depth = 321
+                };
+            }
+            else
+            {
+                LargeNormalArray[i] = new Box();
+            }
+
         }
     }
 
@@ -52,7 +101,15 @@ public class Program
         NormalArray[0].Execute();
     }
 
-
+    [Benchmark]
+    public void NormalGetLarge()
+    {
+        for (var i = 0; i < 10_000; i++)
+        {
+            NormalArray[i].Execute();
+        }
+    }
+    
     [Benchmark]
     public void CustomSet()
     {
@@ -79,6 +136,23 @@ public class Program
             case Testables.Box3d:
                 StructArray.Get<Box3d>(0).Execute();
                 break;
+        }
+    }
+
+    [Benchmark]
+    public void CustomGetLarge()
+    {
+        for (var i = 0; i < 10_000; i++)
+        {
+            switch ((Testables)StructArray.GetType(i))
+            {
+                case Testables.Box:
+                    StructArray.Get<Box>(i).Execute();
+                    break;
+                case Testables.Box3d:
+                    StructArray.Get<Box3d>(i).Execute();
+                    break;
+            }
         }
     }
 }

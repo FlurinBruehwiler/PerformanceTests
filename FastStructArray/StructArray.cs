@@ -1,8 +1,9 @@
 ﻿using System.Collections.Frozen;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Algorithms;
+namespace FastStructArray;
 
 public class StructArray<T, TEnum> where TEnum : unmanaged, Enum, IConvertible
 {
@@ -32,7 +33,7 @@ public class StructArray<T, TEnum> where TEnum : unmanaged, Enum, IConvertible
             if (!possibleType.IsValueType)
                 throw new InvalidOperationException($"All types implementing {typeof(T).Name} have to be structs, {possibleType.Name} is not.");
 
-            var size = Marshal.SizeOf(possibleType);
+            var size = Utils.SizeOf(possibleType);
             if (size > _elementSize)
             {
                 _elementSize = size;
@@ -87,5 +88,31 @@ public class StructArray<T, TEnum> where TEnum : unmanaged, Enum, IConvertible
         }
 
         return a;
+    }
+}
+
+public static class Utils
+{
+    public static int SizeOf<T>(T obj)
+    {
+        return SizeOfCache<T>.SizeOf;
+    }
+
+    private static class SizeOfCache<T>
+    {
+        public static readonly int SizeOf;
+
+        static SizeOfCache()
+        {
+            var dm = new DynamicMethod("func", typeof(int),
+                Type.EmptyTypes, typeof(Utils));
+
+            var il = dm.GetILGenerator();
+            il.Emit(OpCodes.Sizeof, typeof(T));
+            il.Emit(OpCodes.Ret);
+
+            var func = (Func<int>)dm.CreateDelegate(typeof(Func<int>));
+            SizeOf = func();
+        }
     }
 }
