@@ -21,7 +21,7 @@ public class Program
         {
             if (Random.Shared.Next() > 0)
             {
-                StructArray.Set(i,
+                LargeStructArray.Set(i,
                     new Box3d
                     {
                         Box = new Box
@@ -34,7 +34,7 @@ public class Program
             }
             else
             {
-                StructArray.Set(i,
+                LargeStructArray.Set(i,
                     new Box
                     {
                         Height = 20,
@@ -106,7 +106,7 @@ public class Program
     {
         for (var i = 0; i < 10_000; i++)
         {
-            NormalArray[i].Execute();
+            LargeNormalArray[i].Execute();
         }
     }
     
@@ -144,13 +144,13 @@ public class Program
     {
         for (var i = 0; i < 10_000; i++)
         {
-            switch ((Testables)StructArray.GetType(i))
+            switch ((Testables)LargeStructArray.GetType(i))
             {
                 case Testables.Box:
-                    StructArray.Get<Box>(i).Execute();
+                    LargeStructArray.Get<Box>(i).Execute();
                     break;
                 case Testables.Box3d:
-                    StructArray.Get<Box3d>(i).Execute();
+                    LargeStructArray.Get<Box3d>(i).Execute();
                     break;
             }
         }
